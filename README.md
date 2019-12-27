@@ -1,0 +1,2 @@
+# SnakeSolverOnJS
+Created with CodeSandbox
