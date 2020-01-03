@@ -4,11 +4,13 @@ import Food from "/src/food.js";
 import {
   GAME_WIDTH,
   GAME_HEIGHT,
-  SegmentSize,
-  SegmentStroke,
+  SegmentSizeX,
+  SegmentStrokeX,
+  SegmentSizeY,
+  SegmentStrokeY,
   getRandomInt
 } from "/src/index.js";
-import Position from "./Position";
+import Position from "./position";
 import InputHandler from "./inputHandler";
 import { BoardValue } from "./board";
 
@@ -17,14 +19,15 @@ export const GameState = {
   PAUSED: 1,
   MAIN_MENU: 2,
   GAME_OVER: 3,
-  NEW_LEVEL: 4
+  WIN: 4
 };
 
 export const Direction = {
   West: 0,
   North: 1,
   East: 2,
-  South: 3
+  South: 3,
+  NONE: -1
 };
 
 export default class Game {
@@ -33,39 +36,31 @@ export default class Game {
 
     this.gameWidth = gameWidth;
     this.gameHeight = gameHeight;
-
-    this.gameState = GameState.RUNNING;
-
-    this.length = 3;
-
-    this.board = new Board(
-      this.gameWidth / SegmentSize,
-      this.gameHeight / SegmentSize
-    );
-    /*
-    this.snake = new Snake(
-      this.gameWidth / SegmentSize / 2,
-      this.gameHeight / SegmentSize / 2
-    );
-*/
-    this.snake = new Snake(this, 0, 0);
-    this.food = new Food(this, -1, -1);
-
-    this.gameObjects = [this.food, this.snake];
-    this.inputHandler = new InputHandler(this);
   }
 
   start() {
-    if (
-      this.gameState === GameState.PAUSED ||
-      this.gameState === GameState.MAIN_MENU
-    )
-      return;
+    this.gameState = GameState.RUNNING;
+
+    this.board = new Board(
+      this.gameWidth / SegmentSizeX,
+      this.gameHeight / SegmentSizeY
+    );
+
+    this.snake = new Snake(this, 0, 0);
+    this.food = new Food(-1, -1);
+
+    this.gameObjects = [this.food, this.snake];
+
+    this.snake.start();
+    this.food.start();
 
     this.spawnFood();
   }
 
   update() {
+    if (this.gameState === GameState.WIN) {
+      return;
+    }
     [...this.gameObjects].forEach(object => object.update());
   }
 
@@ -78,13 +73,17 @@ export default class Game {
     let newY = 0;
 
     do {
-      newX = getRandomInt(this.gameWidth / SegmentSize);
-      newY = getRandomInt(this.gameHeight / SegmentSize);
+      newX = getRandomInt(this.gameWidth / SegmentSizeX);
+      newY = getRandomInt(this.gameHeight / SegmentSizeY);
     } while (this.board.getPosition(newX, newY) !== BoardValue.NOTHING);
     //} while (0);
 
+    //console.log("HEY " + newY + " " + newX);
+
     this.food.x = newX;
     this.food.y = newY;
+    console.log("NEW FOOD ON:");
+    console.log(this.food);
     this.board.updatePosition(newX, newY, BoardValue.FOOD);
   }
 }

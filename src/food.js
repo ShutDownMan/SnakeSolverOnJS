@@ -1,9 +1,13 @@
-import { SegmentSize, SegmentStroke } from "/src/index.js";
+import {
+  SegmentSizeX,
+  SegmentSizeY,
+  SegmentStrokeX,
+  SegmentStrokeY
+} from "/src/index.js";
 import { BoardValue } from "/src/board.js";
 
 export default class Food {
-  constructor(game, x, y) {
-    this.game = game;
+  constructor(x, y) {
     this.x = x;
     this.y = y;
   }
@@ -15,14 +19,17 @@ export default class Food {
   update() {}
 
   draw(ctx) {
-    let strokeBorder = (SegmentSize - SegmentStroke) / 2;
+    let strokeBorderX = (SegmentSizeX - SegmentStrokeX) / 2;
+    let strokeBorderY = (SegmentSizeY - SegmentStrokeY) / 2;
 
     ctx.fillStyle = "#f00";
     ctx.fillRect(
-      this.x * SegmentSize + strokeBorder,
-      this.y * SegmentSize + strokeBorder,
-      SegmentStroke,
-      SegmentStroke
+      this.x * SegmentSizeX + strokeBorderX,
+      this.y * SegmentSizeY + strokeBorderY,
+      SegmentStrokeX,
+      SegmentStrokeY
     );
+
+    //    console.log("Hello!");
   }
 }

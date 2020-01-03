@@ -1,7 +1,8 @@
 import { Direction } from "./game";
+import { GAME_WIDTH, GAME_HEIGHT } from ".";
 
 export default class InputHandler {
-  constructor(game) {
+  constructor(ctx, game) {
     document.addEventListener("keydown", event => {
       // alert(event.keyCode);
       switch (event.keyCode) {
@@ -30,8 +31,15 @@ export default class InputHandler {
         case 32:
           game.start();
           break;
+        case 78:
+          ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+
+          game.update();
+          game.draw(ctx);
+          break;
 
         default:
+          // alert(event.keyCode);
           break;
       }
       // game.snake.move();
