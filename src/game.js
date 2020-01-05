@@ -33,6 +33,7 @@ export const Direction = {
 export default class Game {
   constructor(gameWidth, gameHeight) {
     console.log("GAME_WIDTH = " + GAME_WIDTH);
+    console.log("GAME_HEIGHT = " + GAME_HEIGHT);
 
     this.gameWidth = gameWidth;
     this.gameHeight = gameHeight;
@@ -82,8 +83,8 @@ export default class Game {
 
     this.food.x = newX;
     this.food.y = newY;
-    console.log("NEW FOOD ON:");
-    console.log(this.food);
+    // console.log("NEW FOOD ON:");
+    // console.log(this.food);
     this.board.updatePosition(newX, newY, BoardValue.FOOD);
   }
 }

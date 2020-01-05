@@ -52,10 +52,10 @@ export default class Snake {
     // console.log(this.checkCollision());
     if (this.snakePath) {
       this.snakePath.createGraph(this);
-      // this.snakePath.boardInfo.logGraph();
+      this.snakePath.boardInfo.logGraph();
       this.direction = this.snakePath.getNextDirection(snakeHeadPos, foodPos);
       // console.log(this.snakePath.boardInfo);
-      // this.snakePath.boardInfo.logBoardInfo();
+      this.snakePath.boardInfo.logBoardInfo();
       // console.log("D = " + this.direction);
     }
     let curDirection = this.direction;
@@ -66,11 +66,12 @@ export default class Snake {
         break;
 
       case SnakeState.GROW:
-        console.log("FOOD EATEN");
+        // console.log("FOOD EATEN");
         this.grow(curDirection);
         this.length++;
         if (this.length === this.game.board.height * this.game.board.width) {
           this.game.gameState = GameState.WIN;
+          window.location.reload(false);
           return;
         }
         this.game.spawnFood();
@@ -198,7 +199,7 @@ export default class Snake {
     ctx.fillStyle = "#bf3";
     ctx.fillRect(
       this.head.x * SegmentSizeX + strokeBorderX,
-      this.head.y * SegmentSizeX + strokeBorderY,
+      this.head.y * SegmentSizeY + strokeBorderY,
       SegmentStrokeX,
       SegmentStrokeY
     );
@@ -244,7 +245,7 @@ class SnakeSegment {
     ctx.fillStyle = "#0f0";
     ctx.fillRect(
       nodeA.x * SegmentSizeX + strokeBorderX,
-      nodeA.y * SegmentSizeX + strokeBorderY,
+      nodeA.y * SegmentSizeY + strokeBorderY,
       (dX + 1) * SegmentStrokeX + 2 * dX * strokeBorderX,
       (dY + 1) * SegmentStrokeY + 2 * dY * strokeBorderY
     );

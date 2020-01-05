@@ -4,13 +4,13 @@ import InputHandler from "./inputHandler";
 
 let canvas = document.getElementById("gameScreen");
 let ctx = canvas.getContext("2d");
-// ctx.canvas.width = window.innerWidth;
-// ctx.canvas.height = window.innerHeight;
+// ctx.canvas.width = window.innerWidth * 0.95;
+// ctx.canvas.height = window.innerHeight * 0.95;
 
-export const GAME_WIDTH = 800;
-export const GAME_HEIGHT = 800;
-export const SegmentCountX = 8;
-export const SegmentCountY = 8;
+export const GAME_WIDTH = ctx.canvas.width;
+export const GAME_HEIGHT = ctx.canvas.height;
+export const SegmentCountX = 16;
+export const SegmentCountY = 16;
 
 export const SegmentSizeX = GAME_WIDTH / SegmentCountX;
 export const SegmentStrokeX = SegmentSizeX * 0.7;

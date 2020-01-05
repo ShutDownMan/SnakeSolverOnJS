@@ -124,9 +124,15 @@ export default class SnakePath {
     isSrcFree = this.boardInfo.get(src.x, src.y).isFree();
     isDestFree = this.boardInfo.get(dest.x, dest.y).isFree();
 
+    if (isSrcFree) {
+      this.boardInfo.get(dest.x, dest.y).gCost = 0;
+      this.calcPathAStar(dest, src);
+      return this.boardInfo.get(src.x, src.y).gCost;
+    }
+
     /// found node withing tree
-    if (src.x === dest.x && src.y === dest.y) {
-      /// Add remaining branches in the node
+    if (equalNode(src, dest)) {
+      /// Add turn cost to node
       for (j = src.qPosition; j !== dest.qPosition; j = (j + 1) % 4) {
         curDist += 2 * (branchLen = this.getBranchLength(src, (j + 1) % 4));
       }
@@ -205,7 +211,12 @@ export default class SnakePath {
 
             /// if current distance is smaller
             /// checks if distance is equal and avoids free nodes's paths
-            if (curDist <= this.boardInfo.get(src.x, src.y).gCost) {
+            if (
+              !(
+                curDist === this.boardInfo.get(src.x, src.y).gCost && isNextFree
+              ) &&
+              curDist <= this.boardInfo.get(src.x, src.y).gCost
+            ) {
               this.boardInfo.get(src.x, src.y).gCost = curDist;
 
               this.boardInfo.get(src.x, src.y).direction =
@@ -238,7 +249,7 @@ export default class SnakePath {
 
   getBranchLengthRec(src) {
     let i, total, branchLen;
-    let nextNode = new Position(0, 0);
+    let nextNode;
 
     this.boardInfo.get(src.x, src.y).treeTag = TagType.BLACK;
 
@@ -254,8 +265,8 @@ export default class SnakePath {
           this.boardInfo.isValidPosition(nextNode.x, nextNode.y) &&
           !this.boardInfo.get(nextNode.x, nextNode.y).treeTag
         ) {
-          total += 1 + (branchLen = this.getBranchLengthRec(nextNode));
-          this.boardInfo.get(src.x, src.y).edges[i] = total;
+          total += branchLen = 1 + this.getBranchLengthRec(nextNode);
+          this.boardInfo.get(src.x, src.y).edges[i] = branchLen;
         }
       }
     }
@@ -265,8 +276,8 @@ export default class SnakePath {
 
   getAdjacentNode(source, direction) {
     let adjNode = new Position(0, 0);
-    adjNode.y = source.y;
     adjNode.x = source.x;
+    adjNode.y = source.y;
 
     adjNode.qPosition = (direction + 2) % 4;
 
@@ -292,66 +303,84 @@ export default class SnakePath {
   }
 
   /*
-	OPEN
-	CLOSED
+OPEN
+CLOSED
 
-	insert OPEN src
-	loop
-		current = lowest fCost node in open
-		remove OPEN current
-		insert CLOSED current
+insert OPEN src
+loop
+current = lowest fCost node in open
+remove OPEN current
+insert CLOSED current
 
-		if current == dest
-			return
+if current == dest
+return
 
-		foreach adge of current
-			if not valid OR not free
-				continue
+foreach adge of current
+if not valid OR not free
+continue
 
-			if new path to edge < current path OR not contain open edge
-				set new path cost and direction
-				insert OPEN edge
+if new path to edge < current path OR not contain open edge
+set new path cost and direction
+insert OPEN edge
 */
   calcPathAStar(src, dest) {
+    /// open and closed sets of nodes
     let open = [];
     let closed = [];
 
+    /// current node and adjecent
     let curNode = new Position(0, 0);
     let adjNode = new Position(0, 0);
     let i, newPathGCost, newPathHCost, newPathFCost;
-    let isAdjDest;
 
     // this.boardInfo.get(src.x, src.y).gCost = 0;
+
+    /// calculate h value for source node
     this.boardInfo.get(src.x, src.y).hCost =
       Math.abs(src.x - dest.x) + Math.abs(src.y - dest.y);
+
+    /// calculate f value for source node
     this.boardInfo.get(src.x, src.y).fCost =
       this.boardInfo.get(src.x, src.y).hCost +
       this.boardInfo.get(src.x, src.y).gCost;
 
+    /// push souce node on open set
     open.push(src);
-    3;
+    /// store fcost onto position for sorting
+    src.fCost = this.boardInfo.get(src.x, src.y).fCost;
     // console.log(open[0]);
     // console.log(open.length);
 
+    /// while computation not complete
     while (true) {
-      open.sort(this.compareNode);
+      /// sort open set by fCost
+      open.sort(compareNode);
 
+      /// if there aren't any more nodes to look at
       if (!open.length) {
+        /// cost is infinite
         this.boardInfo.get(src.x, src.y).gCost = 0xffff;
         this.boardInfo.get(src.x, src.y).fCost = 0xffff;
         break;
       }
 
+      /// get first element of array
       curNode = open[0];
-      open.pop();
+      curNode = open.pop();
+      /// insert it on closed set
       closed.push(curNode);
 
-      if (curNode.x === dest.x && curNode.y === dest.y) break;
-      if (this.equalNode(curNode, dest)) break;
+      /// if destination found, computation is done
+      if (equalNode(curNode, dest)) break;
 
+      /// for each edge of current node
       for (i = 0; i < 4; ++i) {
+        /// get given edge adjacent node
         adjNode = this.getAdjacentNode(curNode, i);
 
+        /// if position not valid or
+        /// adjacent node not free or
+        /// adjacent node is in closed set, continue to next edge
         if (
           !this.boardInfo.isValidPosition(adjNode.x, adjNode.y) ||
           !this.boardInfo.get(adjNode.x, adjNode.y).isFree() ||
@@ -359,31 +388,46 @@ export default class SnakePath {
         )
           continue;
 
+        /// store fcost of adjacent node for sorting
+        adjNode.fCost = this.boardInfo.get(adjNode.x, adjNode.y).fCost;
+
         // console.log("OpenLen = " + open.length);
 
+        /// calculate new g cost given current node
         newPathGCost = this.boardInfo.get(curNode.x, curNode.y).gCost + 1;
+        /// calculate new h cost given current node
         newPathHCost =
           Math.abs(curNode.x - dest.x) + Math.abs(curNode.y - dest.y);
+        /// calculate new f cost given current node
         newPathFCost = newPathGCost + newPathHCost;
 
+        /// if new path cost is smaller than adjacent node cost OR
+        /// adjacent node is not in open set
         if (
           newPathFCost < this.boardInfo.get(adjNode.x, adjNode.y).fCost ||
           !this.contains(open, adjNode)
         ) {
+          /// store newly calculated costs
           this.boardInfo.get(adjNode.x, adjNode.y).gCost = newPathGCost;
           this.boardInfo.get(adjNode.x, adjNode.y).hCost = newPathHCost;
           this.boardInfo.get(adjNode.x, adjNode.y).fCost = newPathFCost;
 
+          /// store fcost in position for sorting
+          adjNode.fCost = this.boardInfo.get(adjNode.x, adjNode.y).fCost;
+
+          /// set new direction for adjacent node pointing to new lowest cost path
           this.boardInfo.get(
             adjNode.x,
             adjNode.y
           ).direction = this.getDirection(adjNode, curNode);
 
+          /// add adjacent node to open set
           open.push(adjNode);
         }
       }
     }
 
+    /// return minimal g cost for getting to destination
     return this.boardInfo.get(dest.x, dest.y).gCost;
   }
 
@@ -391,20 +435,20 @@ export default class SnakePath {
     let i;
 
     for (i = 0; i < list.length; ++i) {
-      if (this.equalNode(node, list[i])) return true;
+      if (equalNode(node, list[i])) return true;
     }
 
     return false;
   }
+}
 
-  equalNode(nodeA, nodeB) {
-    return nodeA.x === nodeB.x && nodeA.y === nodeB.y;
-  }
+function equalNode(nodeA, nodeB) {
+  return nodeA.x === nodeB.x && nodeA.y === nodeB.y;
+}
 
-  compareNode(nodeA, nodeB) {
-    if (!(nodeA.x === nodeB.x && nodeA.y === nodeB.y)) {
-      return nodeA.fCost < nodeB.fCost ? -1 : 1;
-    }
+function compareNode(nodeA, nodeB) {
+  if (equalNode(nodeA, nodeB)) {
     return 0;
   }
+  return nodeA.fCost < nodeB.fCost ? 1 : -1;
 }
