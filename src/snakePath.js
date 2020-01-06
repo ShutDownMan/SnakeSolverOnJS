@@ -1,6 +1,7 @@
 import BoardInfo, { TagType, SegmentInfo } from "./boardInfo";
 import { Direction } from "./game";
 import Position from "./position";
+import { infinite } from ".";
 
 export default class SnakePath {
   constructor(board) {
@@ -116,115 +117,114 @@ export default class SnakePath {
 
   calculatePathRec(src, dest) {
     let i, j, curDist, branchLen, branchLenSum, pathCost;
-    let isSrcFree, isDestFree, isNextFree, firstBranch;
+    let isSrcFree, isDestFree, isNextFree, srcHasFreeEdge;
     let nextNode;
+    let firstBranch, firstEdge;
+    let currentDirection;
 
     curDist = branchLen = branchLenSum = 0;
 
     isSrcFree = this.boardInfo.get(src.x, src.y).isFree();
     isDestFree = this.boardInfo.get(dest.x, dest.y).isFree();
+    // srcHasFreeEdge = this.boardInfo.hasFreeEdge(src);
 
+    /// if source is free then just calculate the AStar path
     if (isSrcFree) {
       this.boardInfo.get(dest.x, dest.y).gCost = 0;
       this.calcPathAStar(dest, src);
       return this.boardInfo.get(src.x, src.y).gCost;
     }
 
-    /// found node withing tree
     if (equalNode(src, dest)) {
-      /// Add turn cost to node
-      for (j = src.qPosition; j !== dest.qPosition; j = (j + 1) % 4) {
-        curDist += 2 * (branchLen = this.getBranchLength(src, (j + 1) % 4));
-      }
-
-      /// if current path cost less
-      if (curDist < this.boardInfo.get(src.x, src.y).gCost) {
-        /// save cost
-      }
-      this.boardInfo.get(src.x, src.y).gCost = curDist;
+      this.boardInfo.get(src.x, src.y).gCost = infinite;
       this.boardInfo.get(src.x, src.y).direction = -1;
-
-      // console.log("curDist = " + curDist);
-
-      return curDist;
+      return infinite;
     }
 
-    for (i = 0; i < 4; ++i) {
-      firstBranch = -1;
-      curDist = branchLenSum = 0;
+    currentDirection = (src.qPosition + 1) % 4;
 
-      /// get next node = adjacent edge given direction
-      nextNode = this.getAdjacentNode(src, i);
-      // console.log(nextNode);
-      // console.log(this.boardInfo.isValidPosition(nextNode.x, nextNode.y));
+    curDist = branchLenSum = 0;
 
-      /// if adjacent node is a valid position
-      if (this.boardInfo.isValidPosition(nextNode.x, nextNode.y)) {
+    /// next node = adjacent edge given direction
+    nextNode = this.boardInfo.getAdjacentNode(src, currentDirection);
+
+    /// if next node is not a valid position just turn the snake
+    if (!this.boardInfo.isValidPosition(nextNode.x, nextNode.y)) {
+      this.boardInfo.get(src.x, src.y).gCost = infinite;
+      this.boardInfo.get(src.x, src.y).direction = -1;
+      return infinite;
+    }
+
+    /// get if next node is free
+    isNextFree = this.boardInfo.get(nextNode.x, nextNode.y).isFree();
+    // console.log(isNextFree);
+
+    /// if not free just keep folowing the path
+    if (!isDestFree || !isNextFree) {
+      this.boardInfo.get(src.x, src.y).gCost = infinite;
+
+      /// if it has an edge with the next node
+      if (this.boardInfo.get(src.x, src.y).edges[currentDirection]) {
+        /// point to that direction
+        this.boardInfo.get(src.x, src.y).direction = currentDirection;
+      } else {
+        /// turn the snake
+        this.boardInfo.get(src.x, src.y).direction = -1;
+      }
+      return infinite;
+    }
+
+    /// if next node is a free node
+    /// try to access it from the food
+    this.boardInfo.get(dest.x, dest.y).gCost = 0;
+    pathCost = this.calcPathAStar(dest, nextNode);
+
+    curDist = 1 + pathCost;
+    /// if node is accessible from food
+    if (pathCost < infinite) {
+      this.boardInfo.get(src.x, src.y).gCost = curDist;
+      this.boardInfo.get(src.x, src.y).direction = currentDirection;
+
+      firstEdge = true;
+      for (
+        i = (currentDirection + 1) % 4;
+        i !== src.qPosition;
+        i = (i + 1) % 4
+      ) {
+        nextNode = this.boardInfo.getAdjacentNode(src, i);
+
+        if (!this.boardInfo.isValidPosition(nextNode.x, nextNode.y)) {
+          continue;
+        }
+
         /// get if next node is free
         isNextFree = this.boardInfo.get(nextNode.x, nextNode.y).isFree();
-        // console.log(isNextFree);
 
-        /// if current node has an edge to that direction OR next node is a free node
+        pathCost = this.calcPathAStar(dest, nextNode);
+        if (isNextFree) {
+        } else {
+          // this.boardInfo.get(nextNode.x, nextNode.y).tag = TagType.BLACK;
+          // /// get the distance recursively depth first
+          // pathCost = this.calculatePathRec(nextNode, dest);
+        }
+        curDist = 1 + pathCost;
+
         if (
-          this.boardInfo.get(src.x, src.y).edges[i] ||
-          (isNextFree && isDestFree)
+          (curDist === this.boardInfo.get(src.x, src.y).gCost && !isNextFree) ||
+          curDist <= this.boardInfo.get(src.x, src.y).gCost
         ) {
-          /// if next node is not tag black
-          if (
-            this.boardInfo.get(nextNode.x, nextNode.y).tag !== TagType.BLACK
-          ) {
-            /// Calculating branch turn cost
-            for (
-              j = (src.qPosition + 1) % 4;
-              j !== this.getDirection(src, nextNode);
-              j = (j + 1) % 4
-            ) {
-              branchLenSum += 2 * (branchLen = this.getBranchLength(src, j));
-              // console.log("branchLenSum = " + branchLenSum);
-
-              /// get first branch direction
-              if (branchLen && firstBranch === -1) {
-                firstBranch = j;
-              }
-            }
-
-            /// if next node is a free node
-            if (isNextFree) {
-              // this.resetAStar();
-              this.boardInfo.get(dest.x, dest.y).gCost = 0;
-              pathCost = this.calcPathAStar(dest, nextNode);
-              // this.boardInfo.get(
-              //   nextNode.x,
-              //   nextNode.y
-              // ).direction = this.getDirection(src, nextNode);
-              // console.log(this.boardInfo.get(nextNode.x, nextNode.y).direction);
-            } else {
-              this.boardInfo.get(nextNode.x, nextNode.y).tag = TagType.BLACK;
-              /// get the distance recursively depth first
-              pathCost = this.calculatePathRec(nextNode, dest);
-            }
-
-            curDist = 1 + branchLenSum + pathCost;
-            // console.log("direction = " + i);
-            // console.log("branchLenSum = " + branchLenSum);
-            // console.log("pathCost = " + pathCost);
-
-            /// if current distance is smaller
-            /// checks if distance is equal and avoids free nodes's paths
-            if (
-              !(
-                curDist === this.boardInfo.get(src.x, src.y).gCost && isNextFree
-              ) &&
-              curDist <= this.boardInfo.get(src.x, src.y).gCost
-            ) {
-              this.boardInfo.get(src.x, src.y).gCost = curDist;
-
-              this.boardInfo.get(src.x, src.y).direction =
-                firstBranch === -1 ? i : firstBranch;
-            }
-          }
+          this.boardInfo.get(src.x, src.y).gCost = curDist;
+          this.boardInfo.get(src.x, src.y).direction = i;
         }
       }
+    }
+
+    /// if adjacent node is a valid position
+    if (this.boardInfo.isValidPosition(nextNode.x, nextNode.y)) {
+      // if (this.boardInfo.get(src.x, src.y).gCost < infinite) {
+      //   if (curDist <= 1) {
+      //   }
+      // }
     }
 
     // this.boardInfo.get(src.x, src.y).tag = TagType.BLACK;
@@ -259,7 +259,7 @@ export default class SnakePath {
           return this.boardInfo.get(src.x, src.y).edges[i];
         }
 
-        nextNode = this.getAdjacentNode(src, i);
+        nextNode = this.boardInfo.getAdjacentNode(src, i);
 
         if (
           this.boardInfo.isValidPosition(nextNode.x, nextNode.y) &&
@@ -272,22 +272,6 @@ export default class SnakePath {
     }
 
     return total;
-  }
-
-  getAdjacentNode(source, direction) {
-    let adjNode = new Position(0, 0);
-    adjNode.x = source.x;
-    adjNode.y = source.y;
-
-    adjNode.qPosition = (direction + 2) % 4;
-
-    if (direction % 2) {
-      adjNode.y += direction - 2;
-    } else {
-      adjNode.x += direction - 1;
-    }
-
-    return adjNode;
   }
 
   resetAStar() {
@@ -359,8 +343,8 @@ insert OPEN edge
       /// if there aren't any more nodes to look at
       if (!open.length) {
         /// cost is infinite
-        this.boardInfo.get(src.x, src.y).gCost = 0xffff;
-        this.boardInfo.get(src.x, src.y).fCost = 0xffff;
+        this.boardInfo.get(src.x, src.y).gCost = infinite;
+        this.boardInfo.get(src.x, src.y).fCost = infinite;
         break;
       }
 
@@ -376,7 +360,7 @@ insert OPEN edge
       /// for each edge of current node
       for (i = 0; i < 4; ++i) {
         /// get given edge adjacent node
-        adjNode = this.getAdjacentNode(curNode, i);
+        adjNode = this.boardInfo.getAdjacentNode(curNode, i);
 
         /// if position not valid or
         /// adjacent node not free or

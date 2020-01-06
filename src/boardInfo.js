@@ -1,4 +1,6 @@
 import { Direction } from "./game";
+import { infinite } from ".";
+import Position from "./position";
 
 export const TagType = {
   WHITE: 0,
@@ -23,6 +25,22 @@ export default class BoardInfo {
 
   get(x, y) {
     return this.segmentsInfo[y][x];
+  }
+
+  getAdjacentNode(source, direction) {
+    let adjNode = new Position(0, 0);
+    adjNode.x = source.x;
+    adjNode.y = source.y;
+
+    adjNode.qPosition = (direction + 2) % 4;
+
+    if (direction % 2) {
+      adjNode.y += direction - 2;
+    } else {
+      adjNode.x += direction - 1;
+    }
+
+    return adjNode;
   }
 
   clean() {
@@ -51,6 +69,21 @@ export default class BoardInfo {
 
   isValidPosition(x, y) {
     return x >= 0 && y >= 0 && x < this.width && y < this.height;
+  }
+
+  hasFreeEdge(src) {
+    let i;
+    let currentNode;
+
+    for (i = 0; i < 4; ++i) {
+      currentNode = this.getAdjacentNode(src, i);
+
+      if (this.isValidPosition(currentNode)) {
+        if (this.get(currentNode.x, currentNode.y).isFree()) return true;
+      }
+    }
+
+    return false;
   }
 
   logGraph() {
@@ -110,17 +143,17 @@ export class SegmentInfo {
     this.tag = TagType.WHITE;
     this.treeTag = TagType.WHITE;
     this.direction = Direction.NONE;
-    this.hCost = 0xffff;
-    this.gCost = 0xffff;
-    this.fCost = 0xffff;
+    this.hCost = infinite;
+    this.gCost = infinite;
+    this.fCost = infinite;
   }
 
   clean() {
     this.tag = TagType.WHITE;
     this.direction = Direction.NONE;
-    this.hCost = 0xffff;
-    this.gCost = 0xffff;
-    this.fCost = 0xffff;
+    this.hCost = infinite;
+    this.gCost = infinite;
+    this.fCost = infinite;
   }
 
   cleanEdges() {
