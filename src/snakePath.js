@@ -116,13 +116,10 @@ export default class SnakePath {
   }
 
   calculatePathRec(src, dest) {
-    let i, j, curDist, branchLen, branchLenSum, pathCost;
-    let isSrcFree, isDestFree, isNextFree, srcHasFreeEdge;
+    let pathCost;
+    let isSrcFree, isDestFree, isNextFree;
     let nextNode;
-    let firstBranch, firstEdge;
     let currentDirection;
-
-    curDist = branchLen = branchLenSum = 0;
 
     isSrcFree = this.boardInfo.get(src.x, src.y).isFree();
     isDestFree = this.boardInfo.get(dest.x, dest.y).isFree();
@@ -132,18 +129,18 @@ export default class SnakePath {
     if (isSrcFree) {
       this.boardInfo.get(dest.x, dest.y).gCost = 0;
       this.calcPathAStar(dest, src);
+
       return this.boardInfo.get(src.x, src.y).gCost;
     }
 
     if (equalNode(src, dest)) {
       this.boardInfo.get(src.x, src.y).gCost = infinite;
       this.boardInfo.get(src.x, src.y).direction = -1;
+
       return infinite;
     }
 
     currentDirection = (src.qPosition + 1) % 4;
-
-    curDist = branchLenSum = 0;
 
     /// next node = adjacent edge given direction
     nextNode = this.boardInfo.getAdjacentNode(src, currentDirection);
@@ -152,85 +149,50 @@ export default class SnakePath {
     if (!this.boardInfo.isValidPosition(nextNode.x, nextNode.y)) {
       this.boardInfo.get(src.x, src.y).gCost = infinite;
       this.boardInfo.get(src.x, src.y).direction = -1;
+
       return infinite;
     }
 
     /// get if next node is free
     isNextFree = this.boardInfo.get(nextNode.x, nextNode.y).isFree();
-    // console.log(isNextFree);
 
-    /// if not free just keep folowing the path
+    /// if destination or next node are not free
     if (!isDestFree || !isNextFree) {
+      /// just keep folowing the path
       this.boardInfo.get(src.x, src.y).gCost = infinite;
 
-      /// if it has an edge with the next node
-      if (this.boardInfo.get(src.x, src.y).edges[currentDirection]) {
-        /// point to that direction
-        this.boardInfo.get(src.x, src.y).direction = currentDirection;
-      } else {
+      /// if it does not has an edge with the next node
+      if (!this.boardInfo.get(src.x, src.y).edges[currentDirection]) {
         /// turn the snake
-        this.boardInfo.get(src.x, src.y).direction = -1;
+        currentDirection = -1;
       }
+      this.boardInfo.get(src.x, src.y).direction = currentDirection;
+
       return infinite;
     }
 
-    /// if next node is a free node
-    /// try to access it from the food
+    /// run the AStar algorithm and get the directions
     this.boardInfo.get(dest.x, dest.y).gCost = 0;
-    pathCost = this.calcPathAStar(dest, nextNode);
+    pathCost = this.calcPathAStar(dest, src);
 
-    curDist = 1 + pathCost;
-    /// if node is accessible from food
-    if (pathCost < infinite) {
-      this.boardInfo.get(src.x, src.y).gCost = curDist;
-      this.boardInfo.get(src.x, src.y).direction = currentDirection;
-
-      firstEdge = true;
-      for (
-        i = (currentDirection + 1) % 4;
-        i !== src.qPosition;
-        i = (i + 1) % 4
-      ) {
-        nextNode = this.boardInfo.getAdjacentNode(src, i);
-
-        if (!this.boardInfo.isValidPosition(nextNode.x, nextNode.y)) {
-          continue;
-        }
-
-        /// get if next node is free
-        isNextFree = this.boardInfo.get(nextNode.x, nextNode.y).isFree();
-
-        pathCost = this.calcPathAStar(dest, nextNode);
-        if (isNextFree) {
-        } else {
-          // this.boardInfo.get(nextNode.x, nextNode.y).tag = TagType.BLACK;
-          // /// get the distance recursively depth first
-          // pathCost = this.calculatePathRec(nextNode, dest);
-        }
-        curDist = 1 + pathCost;
-
-        if (
-          (curDist === this.boardInfo.get(src.x, src.y).gCost && !isNextFree) ||
-          curDist <= this.boardInfo.get(src.x, src.y).gCost
-        ) {
-          this.boardInfo.get(src.x, src.y).gCost = curDist;
-          this.boardInfo.get(src.x, src.y).direction = i;
-        }
-      }
+    /// if has access to food and it's current direction equal that of the food
+    if (
+      pathCost < infinite &&
+      currentDirection === this.boardInfo.get(src.x, src.y).direction
+    ) {
+      return this.boardInfo.get(src.x, src.y).gCost;
     }
 
-    /// if adjacent node is a valid position
-    if (this.boardInfo.isValidPosition(nextNode.x, nextNode.y)) {
-      // if (this.boardInfo.get(src.x, src.y).gCost < infinite) {
-      //   if (curDist <= 1) {
-      //   }
-      // }
+    this.boardInfo.get(src.x, src.y).gCost = infinite;
+
+    /// if it does not has an edge with the next node
+    if (!this.boardInfo.get(src.x, src.y).edges[currentDirection]) {
+      /// turn the snake
+      currentDirection = -1;
     }
+    this.boardInfo.get(src.x, src.y).direction = currentDirection;
 
-    // this.boardInfo.get(src.x, src.y).tag = TagType.BLACK;
-    // pathInfo->cost[src.y][src.x] = minDist;
-
-    return this.boardInfo.get(src.x, src.y).gCost;
+    return infinite;
   }
 
   getBoardDirection(qPosition, direction) {
@@ -357,17 +319,17 @@ insert OPEN edge
       /// if destination found, computation is done
       if (equalNode(curNode, dest)) break;
 
+      if (!this.boardInfo.get(curNode.x, curNode.y).isFree()) continue;
+
       /// for each edge of current node
       for (i = 0; i < 4; ++i) {
         /// get given edge adjacent node
         adjNode = this.boardInfo.getAdjacentNode(curNode, i);
 
         /// if position not valid or
-        /// adjacent node not free or
         /// adjacent node is in closed set, continue to next edge
         if (
           !this.boardInfo.isValidPosition(adjNode.x, adjNode.y) ||
-          !this.boardInfo.get(adjNode.x, adjNode.y).isFree() ||
           this.contains(closed, adjNode)
         )
           continue;

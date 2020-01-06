@@ -9,8 +9,8 @@ let ctx = canvas.getContext("2d");
 
 export const GAME_WIDTH = ctx.canvas.width;
 export const GAME_HEIGHT = ctx.canvas.height;
-export const SegmentCountX = 12;
-export const SegmentCountY = 12;
+export const SegmentCountX = 16;
+export const SegmentCountY = 16;
 
 export const SegmentSizeX = GAME_WIDTH / SegmentCountX;
 export const SegmentStrokeX = SegmentSizeX * 0.7;
@@ -19,7 +19,7 @@ export const SegmentStrokeY = SegmentSizeY * 0.7;
 
 export const infinite = 0xffff;
 
-export const DELAY = 50;
+export const DELAY = 0;
 
 let game = new Game(GAME_WIDTH, GAME_HEIGHT);
 let inputHandler = new InputHandler(ctx, game);
