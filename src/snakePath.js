@@ -1,16 +1,78 @@
 import BoardInfo, { TagType, SegmentInfo } from "./boardInfo";
 import { Direction } from "./game";
 import Position from "./position";
-import { infinite } from ".";
+import {
+  infinite,
+  SegmentSizeX,
+  SegmentStrokeX,
+  SegmentSizeY,
+  SegmentStrokeY
+} from ".";
 
 export default class SnakePath {
-  constructor(board) {
+  constructor(board, snake) {
     this.board = board;
+    this.snake = snake;
     this.boardInfo = null;
   }
 
   start() {
     this.boardInfo = new BoardInfo(this.board.width / 2, this.board.height / 2);
+  }
+
+  draw(ctx, src) {
+    let headPos = this.getGraphPosition(src);
+
+    this.boardInfo.cleanTreeTags();
+
+    this.drawBranchRec(ctx, headPos);
+
+    this.boardInfo.cleanTreeTags();
+  }
+
+  drawBranchRec(ctx, src) {
+    let i;
+    let nextNode, nodeA, nodeB;
+
+    this.boardInfo.get(src.x, src.y).treeTag = TagType.BLACK;
+
+    for (i = 0; i < 4; ++i) {
+      if (this.boardInfo.get(src.x, src.y).edges[i]) {
+        nextNode = this.boardInfo.getAdjacentNode(src, i);
+        // console.log("WTF!");
+
+        if (!this.boardInfo.isValidPosition(nextNode.x, nextNode.y)) continue;
+
+        // console.log("WTF!");
+
+        if (src.x < nextNode.x || src.y < nextNode.y) {
+          nodeA = src;
+          nodeB = nextNode;
+        } else {
+          nodeA = nextNode;
+          nodeB = src;
+        }
+
+        let strokeBorderX = (SegmentSizeX - SegmentStrokeX) / 2;
+        let strokeBorderY = (SegmentSizeY - SegmentStrokeY) / 2;
+        let dX = nodeB.x - nodeA.x;
+        let dY = nodeB.y - nodeA.y;
+
+        ctx.fillStyle = "#6c4327";
+        ctx.fillRect(
+          (2 * nodeA.x + 1) * SegmentSizeX - strokeBorderX,
+          (2 * nodeA.y + 1) * SegmentSizeY - strokeBorderY,
+          2 * (2 * dX + 1) * strokeBorderX + 2 * dX * SegmentStrokeX,
+          2 * (2 * dY + 1) * strokeBorderY + 2 * dY * SegmentStrokeY
+          // 2 * (dX + 1) * strokeBorderX + 2 * dX * SegmentStrokeX,
+          // 2 * (dY + 1) * strokeBorderY + 2 * dY * SegmentStrokeY
+        );
+
+        if (!this.boardInfo.get(nextNode.x, nextNode.y).treeTag) {
+          this.drawBranchRec(ctx, nextNode);
+        }
+      }
+    }
   }
 
   createGraph(snake) {
@@ -78,11 +140,11 @@ export default class SnakePath {
     this.boardInfo.clean();
     this.boardInfo.cleanTreeTags();
 
-    this.boardInfo.get(graphSrc.x, graphSrc.y).tag = TagType.BLACK;
+    // this.boardInfo.get(graphSrc.x, graphSrc.y).tag = TagType.BLACK;
 
     // console.log(this.boardInfo.get(graphSrc.x, graphSrc.y).tag);
 
-    this.calculatePathRec(graphSrc, graphDest);
+    this.calculatePath(graphSrc, graphDest);
     // this.boardInfo.get(graphDest.x, graphDest.y).gCost = 0;
     // this.calcPathAStar(graphDest, graphSrc);
 
@@ -115,7 +177,7 @@ export default class SnakePath {
     return graphPos;
   }
 
-  calculatePathRec(src, dest) {
+  calculatePath(src, dest) {
     let pathCost;
     let isSrcFree, isDestFree, isNextFree;
     let nextNode;

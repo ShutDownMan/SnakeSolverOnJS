@@ -68,6 +68,8 @@ export default class Game {
 
   draw(ctx) {
     [...this.gameObjects].forEach(object => object.draw(ctx));
+
+    // this.snake.snakePath.draw(ctx);
   }
 
   spawnFood() {

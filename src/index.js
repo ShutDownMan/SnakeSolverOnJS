@@ -2,8 +2,8 @@ import "./styles.css";
 import Game from "/src/game.js";
 import InputHandler from "./inputHandler";
 
-let canvas = document.getElementById("gameScreen");
-let ctx = canvas.getContext("2d");
+export var canvas = document.getElementById("gameScreen");
+export var ctx = canvas.getContext("2d");
 // ctx.canvas.width = window.innerWidth * 0.95;
 // ctx.canvas.height = window.innerHeight * 0.95;
 
@@ -33,7 +33,6 @@ export function gameLoop() {
 
   game.update();
   game.drawGuideGrid(ctx);
-  // game.snake.drawTree(ctx);
   game.draw(ctx);
 
   // requestAnimationFrame(gameLoop);
@@ -41,7 +40,7 @@ export function gameLoop() {
 
 for (let i = 0; i < 3; ++i) {
   console.log("...");
-  // gameLoop();
+  gameLoop();
 }
 
 let timer = setTimeout(function updateInteval() {

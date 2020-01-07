@@ -9,6 +9,7 @@ import { BoardValue } from "/src/board.js";
 import Position from "/src/position.js";
 import SnakePath from "./snakePath";
 import { TagType } from "./boardInfo";
+import { ctx } from ".";
 
 export const SnakeState = {
   DEAD: 0,
@@ -41,7 +42,7 @@ export default class Snake {
 
   start() {
     this.direction = Direction.East;
-    this.snakePath = new SnakePath(this.game.board);
+    this.snakePath = new SnakePath(this.game.board, this);
     this.snakePath.start();
   }
 
@@ -52,10 +53,11 @@ export default class Snake {
     // console.log(this.checkCollision());
     if (this.snakePath) {
       this.snakePath.createGraph(this);
-      this.snakePath.boardInfo.logGraph();
+
+      // this.snakePath.boardInfo.logGraph();
       this.direction = this.snakePath.getNextDirection(snakeHeadPos, foodPos);
       // console.log(this.snakePath.boardInfo);
-      this.snakePath.boardInfo.logBoardInfo();
+      // this.snakePath.boardInfo.logBoardInfo();
       // console.log("D = " + this.direction);
     }
     let curDirection = this.direction;
@@ -203,9 +205,8 @@ export default class Snake {
       SegmentStrokeX,
       SegmentStrokeY
     );
+    this.snakePath.draw(ctx, this.head.next);
   }
-
-  drawTree(ctx) {}
 
   setSnakePath(snakePath) {
     this.snakePath = snakePath;
