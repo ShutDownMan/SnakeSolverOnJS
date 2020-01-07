@@ -205,6 +205,8 @@ export default class Snake {
     );
   }
 
+  drawTree(ctx) {}
+
   setSnakePath(snakePath) {
     this.snakePath = snakePath;
   }

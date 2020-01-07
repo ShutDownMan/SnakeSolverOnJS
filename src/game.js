@@ -13,6 +13,7 @@ import {
 import Position from "./position";
 import InputHandler from "./inputHandler";
 import { BoardValue } from "./board";
+import { SegmentCountX, SegmentCountY } from ".";
 
 export const GameState = {
   RUNNING: 0,
@@ -86,6 +87,29 @@ export default class Game {
     // console.log("NEW FOOD ON:");
     // console.log(this.food);
     this.board.updatePosition(newX, newY, BoardValue.FOOD);
+  }
+
+  drawGuideGrid(ctx) {
+    let i;
+
+    for (i = 0; i < SegmentCountX + 2; i += 2) {
+      ctx.fillStyle = "#000";
+      ctx.fillRect(
+        i * SegmentSizeX - (SegmentSizeX - SegmentStrokeX) / 2,
+        0,
+        SegmentSizeX - SegmentStrokeX,
+        SegmentCountY * SegmentSizeY
+      );
+    }
+    for (i = 0; i < SegmentCountY + 2; i += 2) {
+      ctx.fillStyle = "#000";
+      ctx.fillRect(
+        0,
+        i * SegmentSizeY - (SegmentSizeY - SegmentStrokeY) / 2,
+        SegmentCountX * SegmentSizeX,
+        SegmentSizeY - SegmentStrokeY
+      );
+    }
   }
 }
 

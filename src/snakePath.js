@@ -119,7 +119,7 @@ export default class SnakePath {
     let pathCost;
     let isSrcFree, isDestFree, isNextFree;
     let nextNode;
-    let currentDirection;
+    let currentDirection, nextDirection;
 
     isSrcFree = this.boardInfo.get(src.x, src.y).isFree();
     isDestFree = this.boardInfo.get(dest.x, dest.y).isFree();
@@ -180,6 +180,27 @@ export default class SnakePath {
       pathCost < infinite &&
       currentDirection === this.boardInfo.get(src.x, src.y).direction
     ) {
+      /// evaluate if continuing the snake path has the same cost
+      nextDirection = (currentDirection + 1) % 4;
+
+      nextNode = this.boardInfo.getAdjacentNode(src, nextDirection);
+
+      if (this.boardInfo.isValidPosition(nextNode.x, nextNode.y)) {
+        /// get if next node is free
+        isNextFree = this.boardInfo.get(nextNode.x, nextNode.y).isFree();
+        if (!isNextFree) {
+          if (
+            this.boardInfo.get(nextNode.x, nextNode.y).gCost <=
+            this.boardInfo.get(src.x, src.y).gCost
+          ) {
+            this.boardInfo.get(
+              nextNode.x,
+              nextNode.y
+            ).direction = this.getDirection(src, nextNode);
+          }
+        }
+      }
+
       return this.boardInfo.get(src.x, src.y).gCost;
     }
 
@@ -322,7 +343,7 @@ insert OPEN edge
       if (!this.boardInfo.get(curNode.x, curNode.y).isFree()) continue;
 
       /// for each edge of current node
-      for (i = 0; i < 4; ++i) {
+      for (i = 3; i + 1; --i) {
         /// get given edge adjacent node
         adjNode = this.boardInfo.getAdjacentNode(curNode, i);
 

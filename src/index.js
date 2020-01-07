@@ -19,7 +19,7 @@ export const SegmentStrokeY = SegmentSizeY * 0.7;
 
 export const infinite = 0xffff;
 
-export const DELAY = 0;
+export const DELAY = 50;
 
 let game = new Game(GAME_WIDTH, GAME_HEIGHT);
 let inputHandler = new InputHandler(ctx, game);
@@ -32,6 +32,8 @@ export function gameLoop() {
   ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
   game.update();
+  game.drawGuideGrid(ctx);
+  // game.snake.drawTree(ctx);
   game.draw(ctx);
 
   // requestAnimationFrame(gameLoop);
