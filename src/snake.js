@@ -73,7 +73,7 @@ export default class Snake {
         this.length++;
         if (this.length === this.game.board.height * this.game.board.width) {
           this.game.gameState = GameState.WIN;
-          window.location.reload(false);
+          // window.location.reload(false);
           return;
         }
         this.game.spawnFood();
@@ -205,6 +205,10 @@ export default class Snake {
       SegmentStrokeX,
       SegmentStrokeY
     );
+  }
+
+  drawGuideTree(ctx) {
+    this.snakePath.createGraph(this);
     this.snakePath.draw(ctx, this.head.next);
   }
 

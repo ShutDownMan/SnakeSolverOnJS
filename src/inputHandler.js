@@ -1,5 +1,5 @@
 import { Direction } from "./game";
-import { GAME_WIDTH, GAME_HEIGHT } from ".";
+import { GAME_WIDTH, GAME_HEIGHT, gameLoop } from ".";
 
 export default class InputHandler {
   constructor(ctx, game) {
@@ -32,10 +32,7 @@ export default class InputHandler {
           game.start();
           break;
         case 78:
-          ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
-
-          game.update();
-          game.draw(ctx);
+          gameLoop();
           break;
 
         default:

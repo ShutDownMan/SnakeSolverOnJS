@@ -38,6 +38,7 @@ export default class Game {
 
     this.gameWidth = gameWidth;
     this.gameHeight = gameHeight;
+    this.gameState = GameState.MAIN_MENU;
   }
 
   start() {
@@ -60,16 +61,11 @@ export default class Game {
   }
 
   update() {
-    if (this.gameState === GameState.WIN) {
-      return;
-    }
     [...this.gameObjects].forEach(object => object.update());
   }
 
   draw(ctx) {
     [...this.gameObjects].forEach(object => object.draw(ctx));
-
-    // this.snake.snakePath.draw(ctx);
   }
 
   spawnFood() {
@@ -95,7 +91,7 @@ export default class Game {
     let i;
 
     for (i = 0; i < SegmentCountX + 2; i += 2) {
-      ctx.fillStyle = "#000";
+      ctx.fillStyle = "#111";
       ctx.fillRect(
         i * SegmentSizeX - (SegmentSizeX - SegmentStrokeX) / 2,
         0,
@@ -104,7 +100,7 @@ export default class Game {
       );
     }
     for (i = 0; i < SegmentCountY + 2; i += 2) {
-      ctx.fillStyle = "#000";
+      ctx.fillStyle = "#111";
       ctx.fillRect(
         0,
         i * SegmentSizeY - (SegmentSizeY - SegmentStrokeY) / 2,
@@ -112,6 +108,10 @@ export default class Game {
         SegmentSizeY - SegmentStrokeY
       );
     }
+  }
+
+  drawGuideTree(ctx) {
+    this.snake.drawGuideTree(ctx);
   }
 }
 
