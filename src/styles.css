@@ -11,6 +11,10 @@ body {
   width: 800px;
 }
 
+#innerControlPanel {
+  padding: 2%;
+}
+
 .slidecontainer {
   width: 95%; /* Width of the outside container */
   padding-left: 2%;

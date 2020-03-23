@@ -51,6 +51,8 @@ export function checkConfigs() {
   /// if game is over
   if (game.gameState === GameState.WIN) {
     /// start again
+    game = new Game(GAME_WIDTH, GAME_HEIGHT);
+    inputHandler = new InputHandler(ctx, game);
     game.start();
   }
 }
@@ -109,6 +111,8 @@ export function changeDimensions() {
   SegmentCountX = x;
   SegmentCountY = y;
   startConfigs();
+  game = new Game(GAME_WIDTH, GAME_HEIGHT);
+  inputHandler = new InputHandler(ctx, game);
   game.start();
   draw();
 }

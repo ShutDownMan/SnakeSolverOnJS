@@ -28,9 +28,7 @@ export default class BoardInfo {
   }
 
   getAdjacentNode(source, direction) {
-    let adjNode = new Position(0, 0);
-    adjNode.x = source.x;
-    adjNode.y = source.y;
+    let adjNode = new Position(source.x, source.y);
 
     adjNode.qPosition = (direction + 2) % 4;
 
@@ -41,6 +39,29 @@ export default class BoardInfo {
     }
 
     return adjNode;
+  }
+
+  translateToBoard(source) {
+    let newX = 0;
+    let newY = 0;
+
+    if (source.x < 0) {
+      newX = source.x + this.width;
+    } else {
+      newX = source.x % this.width;
+    }
+
+    if (source.y < 0) {
+      newY = source.y + this.height;
+    } else {
+      newY = source.y % this.height;
+    }
+
+    return new Position(newX, newY);
+  }
+
+  isBoundaryAdjacent(nodeA, nodeB) {
+    return Math.abs(nodeA.x - nodeB.x) + Math.abs(nodeA.y - nodeB.y) > 1;
   }
 
   clean() {

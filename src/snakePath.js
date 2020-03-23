@@ -10,13 +10,14 @@ import {
 } from ".";
 
 export default class SnakePath {
-  constructor(board, snake) {
-    this.board = board;
-    this.snake = snake;
+  constructor() {
+    this.board = null;
     this.boardInfo = null;
   }
 
-  start() {
+  start(board) {
+    this.board = board;
+
     this.boardInfo = new BoardInfo(this.board.width / 2, this.board.height / 2);
   }
 
@@ -39,6 +40,7 @@ export default class SnakePath {
     for (i = 0; i < 4; ++i) {
       if (this.boardInfo.get(src.x, src.y).edges[i]) {
         nextNode = this.boardInfo.getAdjacentNode(src, i);
+        nextNode = this.boardInfo.translateToBoard(nextNode);
         // console.log("WTF!");
 
         if (!this.boardInfo.isValidPosition(nextNode.x, nextNode.y)) continue;
@@ -55,18 +57,34 @@ export default class SnakePath {
 
         let strokeBorderX = (SegmentSizeX - SegmentStrokeX) / 2;
         let strokeBorderY = (SegmentSizeY - SegmentStrokeY) / 2;
-        let dX = nodeB.x - nodeA.x;
-        let dY = nodeB.y - nodeA.y;
+        let dX = nodeB.x - nodeA.x !== 0.0;
+        let dY = nodeB.y - nodeA.y !== 0.0;
 
         ctx.fillStyle = "#6c4327";
-        ctx.fillRect(
-          (2 * nodeA.x + 1) * SegmentSizeX - strokeBorderX,
-          (2 * nodeA.y + 1) * SegmentSizeY - strokeBorderY,
-          2 * (2 * dX + 1) * strokeBorderX + 2 * dX * SegmentStrokeX,
-          2 * (2 * dY + 1) * strokeBorderY + 2 * dY * SegmentStrokeY
-          // 2 * (dX + 1) * strokeBorderX + 2 * dX * SegmentStrokeX,
-          // 2 * (dY + 1) * strokeBorderY + 2 * dY * SegmentStrokeY
-        );
+
+        if (Math.abs(nodeA.x - nodeB.x) + Math.abs(nodeA.y - nodeB.y) > 1) {
+          /// segment fill for first segment
+          ctx.fillRect(
+            (2 * nodeA.x - (dX === true) + 1) * SegmentSizeX - strokeBorderX,
+            (2 * nodeA.y - (dY === true) + 1) * SegmentSizeY - strokeBorderY,
+            2 * (dX + 1) * strokeBorderX + dX * SegmentStrokeX,
+            2 * (dY + 1) * strokeBorderY + dY * SegmentStrokeY
+          );
+          /// segment fill for second segment
+          ctx.fillRect(
+            (2 * nodeB.x + 1) * SegmentSizeX - strokeBorderX,
+            (2 * nodeB.y + 1) * SegmentSizeY - strokeBorderY,
+            2 * (dX + 1) * strokeBorderX + dX * SegmentStrokeX,
+            2 * (dY + 1) * strokeBorderY + dY * SegmentStrokeY
+          );
+        } else {
+          ctx.fillRect(
+            (2 * nodeA.x + 1) * SegmentSizeX - strokeBorderX,
+            (2 * nodeA.y + 1) * SegmentSizeY - strokeBorderY,
+            2 * (2 * dX + 1) * strokeBorderX + 2 * dX * SegmentStrokeX,
+            2 * (2 * dY + 1) * strokeBorderY + 2 * dY * SegmentStrokeY
+          );
+        }
 
         if (!this.boardInfo.get(nextNode.x, nextNode.y).treeTag) {
           this.drawBranchRec(ctx, nextNode);
@@ -75,28 +93,30 @@ export default class SnakePath {
     }
   }
 
-  createGraph(snake) {
-    let lastNode = snake.head.next;
-    let curNode = lastNode.next;
-    let lastPos = new Position(0, 0);
-    let curPos = new Position(0, 0);
-
+  createGraph(snakes) {
     this.boardInfo.cleanEdges();
     // this.boardInfo.logGraph();
 
-    while (curNode !== snake.head.next) {
-      lastPos.x = Math.floor(lastNode.x / 2.0);
-      lastPos.y = Math.floor(lastNode.y / 2.0);
-      curPos.x = Math.floor(curNode.x / 2.0);
-      curPos.y = Math.floor(curNode.y / 2.0);
+    for (const snake of snakes) {
+      let lastNode = snake.head.next;
+      let curNode = lastNode.next;
+      let lastPos = new Position(0, 0);
+      let curPos = new Position(0, 0);
 
-      this.createEdge(lastPos, curPos);
+      while (curNode !== snake.head.next) {
+        lastPos.x = Math.floor(lastNode.x / 2.0);
+        lastPos.y = Math.floor(lastNode.y / 2.0);
+        curPos.x = Math.floor(curNode.x / 2.0);
+        curPos.y = Math.floor(curNode.y / 2.0);
 
-      lastNode = curNode;
-      curNode = curNode.next;
+        this.createEdge(lastPos, curPos);
+
+        lastNode = curNode;
+        curNode = curNode.next;
+      }
+
+      // console.log(this.boardInfo);
     }
-
-    // console.log(this.boardInfo);
   }
 
   createEdge(posA, posB) {
@@ -104,14 +124,20 @@ export default class SnakePath {
 
     if (direction < 0) return;
 
-    if (Math.abs(posA.x - posB.x) + Math.abs(posA.y - posB.y) > 1) return;
-
     if (
       this.boardInfo.isValidPosition(posA.x, posA.y) &&
       this.boardInfo.isValidPosition(posB.x, posB.y)
     ) {
-      this.boardInfo.get(posA.x, posA.y).edges[direction] = -1;
-      this.boardInfo.get(posB.x, posB.y).edges[(direction + 2) % 4] = -1;
+      /// Check if boundary edge
+      if (Math.abs(posA.x - posB.x) + Math.abs(posA.y - posB.y) > 1) {
+        /// is boundary edge
+        this.boardInfo.get(posA.x, posA.y).edges[(direction + 2) % 4] = -1;
+        this.boardInfo.get(posB.x, posB.y).edges[direction] = -1;
+      } else {
+        /// is normal edge
+        this.boardInfo.get(posA.x, posA.y).edges[direction] = -1;
+        this.boardInfo.get(posB.x, posB.y).edges[(direction + 2) % 4] = -1;
+      }
     }
   }
 
@@ -206,6 +232,7 @@ export default class SnakePath {
 
     /// next node = adjacent edge given direction
     nextNode = this.boardInfo.getAdjacentNode(src, currentDirection);
+    nextNode = this.boardInfo.translateToBoard(nextNode);
 
     /// if next node is not a valid position just turn the snake
     if (!this.boardInfo.isValidPosition(nextNode.x, nextNode.y)) {
@@ -246,6 +273,7 @@ export default class SnakePath {
       nextDirection = (currentDirection + 1) % 4;
 
       nextNode = this.boardInfo.getAdjacentNode(src, nextDirection);
+      nextNode = this.boardInfo.translateToBoard(nextNode);
 
       if (this.boardInfo.isValidPosition(nextNode.x, nextNode.y)) {
         /// get if next node is free
@@ -255,10 +283,14 @@ export default class SnakePath {
             this.boardInfo.get(nextNode.x, nextNode.y).gCost <=
             this.boardInfo.get(src.x, src.y).gCost
           ) {
+            let nodeDirection = -1;
+            nodeDirection = this.boardInfo.isBoundaryAdjacent(src, nextNode)
+              ? this.getDirection(nextNode, src)
+              : this.getDirection(src, nextNode);
             this.boardInfo.get(
               nextNode.x,
               nextNode.y
-            ).direction = this.getDirection(src, nextNode);
+            ).direction = nodeDirection;
           }
         }
       }
@@ -305,6 +337,7 @@ export default class SnakePath {
         }
 
         nextNode = this.boardInfo.getAdjacentNode(src, i);
+        nextNode = this.boardInfo.translateToBoard(nextNode);
 
         if (
           this.boardInfo.isValidPosition(nextNode.x, nextNode.y) &&
@@ -408,6 +441,7 @@ insert OPEN edge
       for (i = 3; i + 1; --i) {
         /// get given edge adjacent node
         adjNode = this.boardInfo.getAdjacentNode(curNode, i);
+        adjNode = this.boardInfo.translateToBoard(adjNode);
 
         /// if position not valid or
         /// adjacent node is in closed set, continue to next edge
@@ -422,11 +456,15 @@ insert OPEN edge
 
         // console.log("OpenLen = " + open.length);
 
+        let taxiDistX = Math.abs(curNode.x - dest.x);
+        let taxiDistY = Math.abs(curNode.y - dest.y);
+
         /// calculate new g cost given current node
         newPathGCost = this.boardInfo.get(curNode.x, curNode.y).gCost + 1;
         /// calculate new h cost given current node
         newPathHCost =
-          Math.abs(curNode.x - dest.x) + Math.abs(curNode.y - dest.y);
+          Math.min(taxiDistX, this.boardInfo.width - taxiDistX) +
+          Math.min(taxiDistY, this.boardInfo.height - taxiDistY);
         /// calculate new f cost given current node
         newPathFCost = newPathGCost + newPathHCost;
 
@@ -448,7 +486,9 @@ insert OPEN edge
           this.boardInfo.get(
             adjNode.x,
             adjNode.y
-          ).direction = this.getDirection(adjNode, curNode);
+          ).direction = this.boardInfo.isBoundaryAdjacent(curNode, adjNode)
+            ? this.getDirection(curNode, adjNode)
+            : this.getDirection(adjNode, curNode);
 
           /// add adjacent node to open set
           open.push(adjNode);

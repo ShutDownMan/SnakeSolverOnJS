@@ -10,6 +10,7 @@ export default class Food {
   constructor(x, y) {
     this.x = x;
     this.y = y;
+    this.eaten = false;
   }
 
   start() {
