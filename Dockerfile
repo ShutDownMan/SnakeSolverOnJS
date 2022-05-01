@@ -1,16 +1,16 @@
 # syntax=docker/dockerfile:1
 FROM node:17.9.0-slim
 
-RUN mkdir /docker-build
-WORKDIR /docker-build
+run mkdir ./project
+WORKDIR ./project
 
 ENV NODE_ENV=production
 
 COPY package*.json ./
-RUN npm install --production
+RUN alias npm="node --dns-result-order=ipv4first $(which npm)" && npm install
 
 EXPOSE 1234
 
 COPY . .
 
-CMD ["npm", "run", "start"]
+CMD ["npm", "run", "run"]
