@@ -11,6 +11,6 @@ RUN npm install --production
 
 EXPOSE 1234
 
-COPY . /app
+COPY . .
 
 CMD ["npm", "run", "start"]
