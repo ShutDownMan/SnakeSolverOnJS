@@ -1,0 +1,7 @@
+version: "3.7"
+services:
+  web:
+    build: .
+    ports:
+      - 6551:1234
+    restart: unless-stopped
