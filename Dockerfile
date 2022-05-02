@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM node:17.9.0-slim
+FROM node:alpine
 
 run mkdir ./project
 WORKDIR ./project
