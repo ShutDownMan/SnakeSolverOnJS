@@ -12,7 +12,7 @@ RUN apk add --no-cache --virtual .gyp \
         python \
         make \
         g++ \
-    && npm install
+    && npm install \
     && apk del .gyp
 
 EXPOSE 1234
