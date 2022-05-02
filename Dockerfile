@@ -8,12 +8,9 @@ ENV NODE_ENV=production
 
 COPY package*.json ./
 # RUN alias npm="node --dns-result-order=ipv4first $(which npm)" && npm install
-RUN apk --no-cache --virtual build-dependencies add \
-    python \
-    make \
-    g++ \
-    && npm install \
-    && apk del build-dependencies
+RUN apk add --no-cache --virtual .gyp python3 make g++ \
+    && npm install --production \
+    && apk del .gyp
 
 EXPOSE 1234
 
